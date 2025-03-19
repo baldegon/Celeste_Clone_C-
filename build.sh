@@ -3,4 +3,4 @@
 libs=-luser32
 warnings=-Wno-writable-strings
 
-clang src/main.cpp -o clonceleste.exe $libs $warnings
+clang++ -g src/main.cpp -o clonceleste.exe $libs $warnings
