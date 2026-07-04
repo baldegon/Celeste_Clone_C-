@@ -15,7 +15,7 @@
 //                      Defines
 // #######################################################
 #ifdef _WIN32
-#define DEBUG_BREAK() __debugbreak()
+#define DEBUG_BREAK() //__debugbreak()
 #elif __linux__
 #define DEBUG_BREAK() __builtin_debugtrap()
 #elif __APPLE__
