@@ -1,6 +1,7 @@
 #!/bin/bash
 
-libs=-luser32
-warnings=-Wno-writable-strings
+libs="-luser32 -lopengl32 -lgdi32"
+warnings="-Wno-writable-strings -Wno-format-security"
+includes="-Ithird_party -Ithird_party/Include"
 
-clang++ -g src/main.cpp -o clonceleste.exe $libs $warnings
+clang++ $includes -g src/main.cpp -oclonceleste.exe $libs $warnings
