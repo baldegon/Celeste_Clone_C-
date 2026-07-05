@@ -15,7 +15,7 @@
 //                      Defines
 // #######################################################
 #ifdef _WIN32
-#define DEBUG_BREAK() //__debugbreak()
+#define DEBUG_BREAK() __debugbreak()
 #elif __linux__
 #define DEBUG_BREAK() __builtin_debugtrap()
 #elif __APPLE__
@@ -93,7 +93,7 @@ void _log(char* prefix, char* msg, TextColor textColor, Args ...args)
 {                                 \
   if(!(x))                        \
   {                               \
-    SM_ERROR(msg, ##__VA_ARGS__);\
+    SM_ERROR(msg, ##__VA_ARGS__); \
     DEBUG_BREAK();                \
     SM_ERROR("Assertion HIT!")    \
   }                               \
