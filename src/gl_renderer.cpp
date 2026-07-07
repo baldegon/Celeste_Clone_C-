@@ -1,5 +1,8 @@
 #include "gl_renderer.h"
 #include "clonceleste_lib.h"
+#define STB_IMAGE_IMPLETENTATION
+#include "stb_image.h"
+
 
 //#######
 // OpenGL Structs
