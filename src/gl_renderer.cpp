@@ -1,7 +1,13 @@
 #include "gl_renderer.h"
 #include "clonceleste_lib.h"
+
 #define STB_IMAGE_IMPLETENTATION
 #include "stb_image.h"
+
+//#######
+// OpenGL Structs
+//#######
+const char* TEXTURE_PATH = "assets/textures/TEXTURE_ATLAS.PNG";
 
 
 //#######
@@ -10,6 +16,7 @@
 struct GLContext
 {
     GLuint programID;
+    GLuint textureID;
 };
 
 //#######
@@ -99,6 +106,35 @@ bool gl_init(BumpAllocator* transientStorage)
     GLuint VAO;
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
+
+    // Carga de texturas usando STBI
+    {
+        int width, height, channels;
+        char* data = (char*)stbi_load(TEXTURE_PATH , &width, &height, &channels, 4);
+        if(!data)
+        {
+            SM_ASSERT(false, "Failed to load texture");
+            return false;
+        }
+
+        glGenTextures(1, &glContext.textureID);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, glContext.textureID);
+
+        // Setea la textura para wrapping/filtros y opciones(en la ligadura actual de la textura del objeto)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        // este seteo solo funciona cuando se esta usando la funcion texture() en GLSL
+        // cuando se usa texelFetch() esta funcion no tiene efecto
+        // porque texelFetch fue diseñado para este proposito
+        // documentacion: 
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8_ALPHA8, width, height,
+                        0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        stbi_image_free(data);
+    }
 
 
     //Testeo de Profundidad
