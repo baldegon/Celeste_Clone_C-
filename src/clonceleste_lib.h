@@ -82,7 +82,7 @@ void _log(char* prefix, char* msg, TextColor textColor, Args ...args)
   sprintf(textBuffer, formatBuffer, args...);
 
   puts(textBuffer);
-};
+}
 
 
 #define SM_TRACE(msg, ...) _log("TRACE: ", msg, TEXT_COLOR_GREEN, ##__VA_ARGS__);

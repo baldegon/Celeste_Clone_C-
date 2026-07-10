@@ -1,7 +1,7 @@
 #include "gl_renderer.h"
 #include "clonceleste_lib.h"
 
-#define STB_IMAGE_IMPLETENTATION
+#define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
 //#######
@@ -27,7 +27,7 @@ static GLContext glContext;
 //#######
 // OpenGL Functions
 //#######
-static void APIENTRY gl_debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* user)
+static void APIENTRY gl_debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity,      GLsizei length, const GLchar* message, const void* user)
 {
     if(severity == GL_DEBUG_SEVERITY_LOW ||
        severity == GL_DEBUG_SEVERITY_MEDIUM ||
@@ -38,7 +38,7 @@ static void APIENTRY gl_debug_callback(GLenum source, GLenum type, GLuint id, GL
     else
     {
         SM_TRACE((char*)message)
-    }
+    };
 }
 
 bool gl_init(BumpAllocator* transientStorage)

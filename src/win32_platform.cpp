@@ -5,8 +5,7 @@
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <windows.h>
-#include <wglext.h>
-#include "glcorearb.h"
+#include "wglext.h"
 
 
 //#############################################################
