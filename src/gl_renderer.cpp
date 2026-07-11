@@ -4,6 +4,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+#include "render_interface.h"
+
 //#######
 // OpenGL Structs
 //#######
@@ -17,6 +19,7 @@ struct GLContext
 {
     GLuint programID;
     GLuint textureID;
+    GLuint transformSBOID;
 };
 
 //#######
@@ -137,6 +140,22 @@ bool gl_init(BumpAllocator* transientStorage)
     }
 
 
+    //Transform storage buffer
+    {
+        glGenBuffers(1, &glContext.transformSBOID);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, glContext.transformSBOID);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Transform) * MAX_TRANSFORMS,
+                     renderData.transforms, GL_DYNAMIC_DRAW);
+    }
+
+    // sRGB output (even if input texture is non-sRGB -> don't rely on texture used)
+    // Your font is not using sRGB, for example (not that it matters there, because no actual color is sampled from it)
+    // But this could prevent some future bug when you start mixing different types of textures
+    // Of course, you still need to correctly set the image file source format when using glTexImage2D()
+    glEnable(GL_FRAMEBUFFER_SRGB);
+    glDisable(0x809D); // disable multisampling
+
+
     //Testeo de Profundidad
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_GREATER);
@@ -155,5 +174,15 @@ void gl_render()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glViewport(0, 0, input.screenSizeX, input.screenSizeY);
 
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    // opaca objetos
+    {
+        //copia Transforms a la GPU
+        glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(Transform) * renderData.transformCount,
+                         renderData.transforms);
+
+        glDrawArraysInstanced(GL_TRIANGLES, 0, 6, renderData.transformCount);
+
+        //resetea para el siguiente frame
+        renderData.transformCount = 0;
+    }
 }
