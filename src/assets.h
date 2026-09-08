@@ -34,4 +34,6 @@ Sprite get_sprite(SpriteID spriteID)
             sprite.spriteSize = {16,16};
         }
     }
+
+    return sprite;
 };

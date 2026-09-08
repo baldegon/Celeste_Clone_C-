@@ -1,6 +1,7 @@
 
 #include "platform.h"
 #include "clonceleste_lib.h"
+#include "glcorearb.h"
 
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX

@@ -1,5 +1,7 @@
 #include "gl_renderer.h"
+#include "glcorearb.h"
 #include "clonceleste_lib.h"
+#include "input.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -20,6 +22,7 @@ struct GLContext
     GLuint programID;
     GLuint textureID;
     GLuint transformSBOID;
+    GLuint screenSizeID;
 };
 
 //#######
@@ -148,6 +151,12 @@ bool gl_init(BumpAllocator* transientStorage)
                      renderData.transforms, GL_DYNAMIC_DRAW);
     }
 
+
+    // Uniforms
+    {
+        glContext.screenSizeID = glGetUniformLocation(glContext.programID, "screenSize");
+    }
+
     // sRGB output (even if input texture is non-sRGB -> don't rely on texture used)
     // Your font is not using sRGB, for example (not that it matters there, because no actual color is sampled from it)
     // But this could prevent some future bug when you start mixing different types of textures
@@ -173,6 +182,11 @@ void gl_render()
     glClearDepth(0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glViewport(0, 0, input.screenSizeX, input.screenSizeY);
+
+    // Copia el screenSize a la GPU
+    Vec2 screenSize = {(float)input.screenSizeX, (float)input.screenSizeY};
+    glUniform2fv(glContext.screenSizeID, 1, &screenSize.x);
+
 
     // opaca objetos
     {
