@@ -16,10 +16,13 @@
 // #######################################################
 #ifdef _WIN32
 #define DEBUG_BREAK() __debugbreak()
+#define EXPORT_FN __declspec(dllexport)
 #elif __linux__
 #define DEBUG_BREAK() __builtin_debugtrap()
+#define EXPORT_FN
 #elif __APPLE__
 #define DEBUG_BREAK() __builtin_trap()
+#define EXPORT_FN
 #endif
 
 #define BIT(x) 1 << (x)
@@ -302,3 +305,113 @@ struct IVec2
   int x;
   int y;
 };
+
+struct Vec4
+{
+  union
+  {
+    float values[4];
+    struct
+    {
+      float x;
+      float y;
+      float z;
+      float w;
+    };
+    
+    struct
+    {
+      float r;
+      float g;
+      float b;
+      float a;
+    };
+  };
+
+  float& operator[](int idx)
+  {
+    return values[idx];
+  }
+
+  bool operator==(Vec4 other)
+  {
+    return x == other.x && y == other.y && z == other.z && w == other.w;
+  }
+};
+
+struct Vec4
+{
+  union
+  {
+    float values[4];
+    struct
+    {
+      float x;
+      float y;
+      float z;
+      float w;
+    };
+    
+    struct
+    {
+      float r;
+      float g;
+      float b;
+      float a;
+    };
+  };
+
+  float& operator[](int idx)
+  {
+    return values[idx];
+  }
+};
+
+struct Mat4
+{
+  union 
+  {
+    Vec4 values[4];
+    struct
+    {
+      float ax;
+      float bx;
+      float cx;
+      float dx;
+
+      float ay;
+      float by;
+      float cy;
+      float dy;
+
+      float az;
+      float bz;
+      float cz;
+      float dz;
+      
+      float aw;
+      float bw;
+      float cw;
+      float dw;
+    };
+  };
+
+  Vec4& operator[](int col)
+  {
+    return values[col];
+  }
+};
+
+Mat4 orthographic_projection(float left, float right, float bottom, float top, float near, float far)
+{
+  Mat4 result = {};
+  result.aw = -(right + left) / (right - left);
+  result.bw = (top + bottom) / (top - bottom);
+  result.cw = 0.0f; // Near Plane
+  result[0][0] = 2.0f / (right - left);
+  result[1][1] = 2.0f / (top - bottom);
+  result[2][2] = 1.0f / (1.0f - 0.0f); // Far and Near
+  result[3][3] = 1.0f;
+
+  return result;
+}

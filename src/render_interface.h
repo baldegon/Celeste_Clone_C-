@@ -1,7 +1,7 @@
 #pragma once
 
 #include "assets.h"
-
+#include "clonceleste_lib.h"
 // ####
 // Renderer Constants
 // ####
@@ -20,6 +20,10 @@ struct Transform
 
 struct RenderData
 {
+    OrthographicCamera2D gameCamera;
+    OrthographicCamera2D uiCamera;
+
+
     int transformCount;
     Transform transforms[MAX_TRANSFORMS];
 };
@@ -27,7 +31,7 @@ struct RenderData
 // ####
 // Renderer Globals
 // ####
-static RenderData renderData;
+static RenderData* renderData;
 
 // ####
 // Renderer Functions
@@ -42,6 +46,6 @@ void draw_sprite(SpriteID spriteID, Vec2 pos, Vec2 size)
     transform.atlasOffset = sprite.atlasOffset;
     transform.spriteSize = sprite.spriteSize;
 
-    renderData.transforms[renderData.transformCount++] = transform;
+    renderData->transforms[renderData->transformCount++] = transform;
 }
 

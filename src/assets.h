@@ -1,5 +1,7 @@
 #pragma once
 
+#include "clonceleste_lib.h"
+
 // ####
 // Renderer Constants
 // ####
