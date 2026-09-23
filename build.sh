@@ -1,10 +1,10 @@
 
-/*
+
 ###
 
 
 ###
-*/
+
 #!/bin/bash
 
 #libs="-luser32 -lopengl32 -lgdi32"

@@ -11,6 +11,8 @@
 #define GL_GLEXT_PROTOTYPES
 #include "glcorearb.h"
 
+static KeyCodeID KeyCodeLookupTable[KEY_COUNT];
+
 #ifdef _WIN32
 #include "win32_platform.cpp"
 #endif
@@ -32,48 +34,53 @@ void reload_game_dll(BumpAllocator* transientStorage);
 
 int main()
 {
-    BumpAllocator transientStorage = make_bump_allocator(MB(50)); // 10 MB
-    BumpAllocator persistentStorage = make_bump_allocator(MB(50));
+BumpAllocator transientStorage = make_bump_allocator(MB(50)); // 10 MB
+BumpAllocator persistentStorage = make_bump_allocator(MB(50));
 
-    input = (Input*)bump_alloc(&persistentStorage, sizeof(Input));
-    if(!input)
-    {
-        SM_ERROR(false, "Failed to allocate Input");
-        return -1;
-    }
-    renderData = (RenderData*)bump_alloc(&persistentStorage, sizeof(RenderData));
-    if(!renderData)
-    {
-        SM_ERROR(false, "Failed to allocate RenderData");
-        return -1;
-    }
-
-    platform_create_window(1200, 720, "Baldegon Motor");
-    input->screenSizeX = 1200;
-    input->screenSizeY = 720;
-
-
-    gl_init(&transientStorage);
-
-    while(running)
-    {
-        reload_game_dll(&transientStorage);
-        // Update
-        platform_update_window();
-        update_game(renderData, input);
-        gl_render();
-        platform_swap_buffers();
-
-        transientStorage.used = 0; // Reset the transient storage for the next frame
-    }
-
-    return 0;
+input = (Input*)bump_alloc(&persistentStorage, sizeof(Input));
+if(!input)
+{
+    SM_ERROR(false, "Failed to allocate Input");
+    return -1;
 }
 
-void update_game(RenderData* renderDataIn, Input* inputIn)
+renderData = (RenderData*)bump_alloc(&persistentStorage, sizeof(RenderData));
+if(!renderData)
 {
-    SM_ASSERT(update_game_ptr, "update_game_ptr is null, did you forget to call reload_game_dll()?");
-    update_game_ptr(renderDataIn, inputIn);
+    SM_ERROR(false, "Failed to allocate RenderData");
+    return -1;
+}
+
+gameState = (GameState*)bump_alloc(&persistentStorage, sizeof(GameState));
+if(!gameState)
+{
+    SM_ERROR(false, "Failed to allocate GameState");
+    return -1;
+}
+
+platform_fill_keycode_lookup_table();
+platform_create_window(1280, 640, "Baldegon Motor");
+
+gl_init(&transientStorage);
+
+while(running)
+{
+    reload_game_dll(&transientStorage);
+    // Update
+    platform_update_window();
+    update_game(gameState, renderData, input);
+    gl_render();
+    platform_swap_buffers();
+
+    transientStorage.used = 0; // Reset the transient storage for the next frame
+}
+
+return 0;
+}
+
+void update_game(GameState* gameStateIn,RenderData* renderDataIn, Input* inputIn)
+{
+    update_game_ptr(gameStateIn, renderDataIn, inputIn);
 }
 
 void reload_game_dll(BumpAllocator* transientStorage)
