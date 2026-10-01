@@ -7,9 +7,7 @@
 // #######################################################
 //                      Game Constants
 // #######################################################
-constexpr int WORLD_WIDTH = 320;
-constexpr int WORLD_HEIGHT = 180;
-constexpr int TILESIZE = 8;
+
 
 // #######################################################
 //                      Game Structs
@@ -45,6 +43,24 @@ bool is_down(GameInputType type)
     return false;
 }
 
+Tile* get_tile(int x, int y)
+{
+    Tile* tile = nullptr;
+
+    if(x >= 0 && x < WORLD_GRID.x && y >= 0 && y < WORLD_GRID.y)
+    {
+        tile = &gameState->worldGrid[x][y];
+    }
+
+    return tile;
+}
+
+Tile* get_tile(IVec2 worldPos){
+    int x = worldPos.x / TILESIZE;
+    int y = worldPos.y / TILESIZE;
+
+    return get_tile(x, y);
+}
 
 // #######################################################
 //                      Game Functions (Expuestas)
@@ -77,11 +93,45 @@ if(!gameState -> initialized)
       gameState->keyMappings[MOUSE_RIGHT].keys.add(KEY_MOUSE_RIGHT);
       gameState->keyMappings[JUMP].keys.add(KEY_SPACE);
       gameState->keyMappings[PAUSE].keys.add(KEY_ESCAPE);
+
+    }
+    renderData->gameCamera.position.x = 160;
+    renderData->gameCamera.position.y = -90;
+}
+
+if(is_down(MOUSE_LEFT)){
+    IVec2 mousePosWorld = input->mousePosWorld;
+    Tile* tile = get_tile(mousePosWorld);
+    if(tile){
+        tile->isVisible = true;
     }
 }
 
-renderData->gameCamera.position.x = 0;
-renderData->gameCamera.position.y = 0;
+if(is_down(MOUSE_RIGHT)){
+    IVec2 mousePosWorld = input->mousePosWorld;
+    Tile* tile = get_tile(mousePosWorld);
+    if(tile){
+        tile->isVisible = false;
+    }
+}
+
+// Dibujar Tileset
+{
+    for(int y = 0; y < WORLD_GRID.y; y++){
+        for(int x = 0; x < WORLD_GRID.x; x++)
+        {
+            Tile* tile = get_tile(x, y);
+
+            if(!tile->isVisible){
+                continue;
+            }
+
+            Vec2 tilePos = {x* (float)TILESIZE + (float)TILESIZE / 2.0f, y * (float)TILESIZE + (float)TILESIZE / 2.0f};
+            draw_quad(tilePos, {8,8});
+        }
+    }
+}
+
 
 draw_sprite(SPRITE_DICE, gameState->playerPos);
 

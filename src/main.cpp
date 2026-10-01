@@ -59,7 +59,7 @@ if(!gameState)
 }
 
 platform_fill_keycode_lookup_table();
-platform_create_window(1280, 640, "Baldegon Motor");
+platform_create_window(1280, 720, "Baldegon Motor");
 
 gl_init(&transientStorage);
 
