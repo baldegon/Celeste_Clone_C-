@@ -58,7 +58,7 @@ IVec2 screen_to_world(IVec2 screenPos){
                  camera.dimensions.y; // [0; dimensions.y]
 
     // Offset usando dimension y posicion nuevamente
-    yPos += camera.dimensions.y / 2.0f + camera.dimensions.y;
+    yPos += camera.dimensions.y / 2.0f - camera.dimensions.y;
 
     return{xPos, yPos};
 }
