@@ -69,7 +69,7 @@ while(running)
     // Update
     platform_update_window();
     update_game(gameState, renderData, input);
-    gl_render();
+    gl_render(&transientStorage);
     platform_swap_buffers();
 
     transientStorage.used = 0; // Reset the transient storage for the next frame

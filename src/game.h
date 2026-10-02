@@ -47,6 +47,7 @@ struct GameState
     bool initialized = false;
     IVec2 playerPos;
 
+    Array<IVec2, 21> tileCoords;
     Tile worldGrid[WORLD_GRID.x][WORLD_GRID.y];
     KeyMapping keyMappings[GAME_INPUT_COUNT];
 };

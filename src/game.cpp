@@ -97,6 +97,22 @@ if(!gameState -> initialized)
     }
     renderData->gameCamera.position.x = 160;
     renderData->gameCamera.position.y = -90;
+    
+    //Tileset
+    {
+        IVec2 tilesPosition = {48,0};
+    
+        for(int y = 0; y < 5; y++)
+        {
+            for(int x = 0; x< 4; x++)
+            {
+                gameState->tileCoords.add({tilesPosition.x + x * 8, tilesPosition.y + y * 8});
+            }
+        }
+    
+        // Black Inside
+        gameState->tileCoords.add({tilesPosition.x, tilesPosition.y + 5 * 8});
+    }
 }
 
 if(is_down(MOUSE_LEFT)){
@@ -117,6 +133,19 @@ if(is_down(MOUSE_RIGHT)){
 
 // Dibujar Tileset
 {
+    //Tiles vecinos             Top     Izq         Der         Abajo
+    int neighbourOffsets[24] = {0,-1,   -1,0,       1,0,        0,1,
+    //                          TopIzq  TopDer      AbajoIzq    AbajoDer
+                               -1,-1,   1,-1,       -1,1,       1,1,
+    //                          Top2    Izq2        Der2        Abajo2
+                                0,-2,   -2,0,       2,0,        0,2};
+
+    // TopIzq ( topLeft )   = BIT(4) = 12
+    // TopDer ( topRight )   = BIT(5) = 32
+    // BottomIzq ( bottomLeft )   = BIT(6) = 64
+    // BottomDer ( bottomRight )   = BIT(7) = 128
+
+
     for(int y = 0; y < WORLD_GRID.y; y++){
         for(int x = 0; x < WORLD_GRID.x; x++)
         {
@@ -126,8 +155,55 @@ if(is_down(MOUSE_RIGHT)){
                 continue;
             }
 
-            Vec2 tilePos = {x* (float)TILESIZE + (float)TILESIZE / 2.0f, y * (float)TILESIZE + (float)TILESIZE / 2.0f};
-            draw_quad(tilePos, {8,8});
+            tile->neighbourMask = 0;
+            int neighbourCount = 0;
+            int extendedNeighbourCount = 0;
+            int emptyNeighbourSlot = 0;
+
+            // Mira a los alrededores de los 12 vecinos
+            for(int n = 0; n < 12; n++){
+                Tile* neighbour = get_tile(x + neighbourOffsets[n * 2],
+                                           y + neighbourOffsets[n * 2 + 1]);
+
+                // Si no hay vecinos, significa el borde del mundo
+                if(!neighbour || neighbour->isVisible)
+                {
+                    tile->neighbourMask |= BIT(n);
+                    if(n < 8) // contamos los vecinos directos
+                    {
+                        neighbourCount++;
+                    }
+                    else{ // Contamos los vecinos 1 tile alejado
+                        extendedNeighbourCount++;
+                    }
+                }
+                else if(n < 8)
+                {
+                    emptyNeighbourSlot = n;
+                }
+            }
+
+            if(neighbourCount == 7 && emptyNeighbourSlot >= 4) // tenemos una esquina
+            {
+                tile->neighbourMask = 16 + (emptyNeighbourSlot - 4);
+            }
+            else if(neighbourCount == 8 && extendedNeighbourCount == 4)
+            {
+                tile->neighbourMask = 20;
+            }
+            else
+            {
+                tile->neighbourMask = tile->neighbourMask & 0b1111;
+            }
+
+            // Dibujamos un Tile
+            Transform transform = {};
+            // Dibujamos el Tile alrededor del centro
+            transform.pos = {x * (float)TILESIZE, y * (float)TILESIZE};
+            transform.size = {8,8};
+            transform.spriteSize = {8,8};
+            transform.atlasOffset = gameState->tileCoords[tile->neighbourMask];
+            draw_quad(transform);
         }
     }
 }

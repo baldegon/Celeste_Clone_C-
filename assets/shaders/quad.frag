@@ -21,6 +21,6 @@ void main()
     }
 
     //White quad
-    fragColor = textureColor;
+    fragColor = textureColor + vec4(0, 0, 0, 1);
 }
 

@@ -58,7 +58,7 @@ IVec2 screen_to_world(IVec2 screenPos){
                  camera.dimensions.y; // [0; dimensions.y]
 
     // Offset usando dimension y posicion nuevamente
-    yPos += camera.dimensions.y / 2.0f - camera.dimensions.y;
+    yPos += camera.dimensions.y / 2.0f + camera.position.y;
 
     return{xPos, yPos};
 }
@@ -68,6 +68,12 @@ IVec2 screen_to_world(IVec2 screenPos){
 // ####
 // Renderer Functions
 // ####
+
+void draw_quad(Transform transform)
+{
+    renderData->transforms.add(transform);
+}
+
 void draw_quad(Vec2 pos, Vec2 size){
     Transform transform = {};
     transform.pos = pos - size / 2.0f;
