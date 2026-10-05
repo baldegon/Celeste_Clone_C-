@@ -73,7 +73,7 @@ GLuint gl_create_shader(int shaderType, char* shaderPath, BumpAllocator* transie
         glGetShaderiv(shaderID, GL_COMPILE_STATUS, &success);
         if(!success){
             glGetShaderInfoLog(shaderID, 2048, 0, shaderLog);
- 0,            SM_ASSERT(false, "Failed to compile %s Shader, Error: %s", shaderPath, shaderLog);
+            SM_ASSERT(false, "Failed to compile %s Shader, Error: %s", shaderPath, shaderLog);
             return 0;
         }
     }

@@ -62,10 +62,128 @@ Tile* get_tile(IVec2 worldPos){
     return get_tile(x, y);
 }
 
+void simulate()
+{
+    // Update Player
+    {
+        gameState->player.prevPos = gameState->player.pos;
+
+        if(is_down(MOVE_LEFT))
+        {
+            gameState->player.pos.x -= 1;
+        }
+        if(is_down(MOVE_RIGHT))
+        {
+            gameState->player.pos.x += 1;
+        }
+        if(is_down(MOVE_UP))
+        {
+            gameState->player.pos.y -= 1;
+        }
+        if(is_down(MOVE_DOWN))
+        {
+            gameState->player.pos.y += 1;
+        }
+    }
+
+    bool updateTiles = false;
+    if(is_down(MOUSE_LEFT)){
+        IVec2 mousePosWorld = input->mousePosWorld;
+        Tile* tile = get_tile(mousePosWorld);
+        if(tile){
+            tile->isVisible = true;
+            updateTiles = true;
+        }
+    }
+
+    if(is_down(MOUSE_RIGHT)){
+        IVec2 mousePosWorld = input->mousePosWorld;
+        Tile* tile = get_tile(mousePosWorld);
+        if(tile){
+            tile->isVisible = false;
+            updateTiles = true;
+        }
+    }
+
+    if(updateTiles)
+    {
+        
+    
+        //Tiles vecinos             Top     Izq         Der         Abajo
+        int neighbourOffsets[24] = {0,-1,   -1,0,       1,0,        0,1,
+        //                          TopIzq  TopDer      AbajoIzq    AbajoDer
+                                -1,-1,   1,-1,       -1,1,       1,1,
+        //                          Top2    Izq2        Der2        Abajo2
+                                    0,-2,   -2,0,       2,0,        0,2};
+
+        // TopIzq ( topLeft )   = BIT(4) = 12
+        // TopDer ( topRight )   = BIT(5) = 32
+        // BottomIzq ( bottomLeft )   = BIT(6) = 64
+        // BottomDer ( bottomRight )   = BIT(7) = 128
+
+
+        for(int y = 0; y < WORLD_GRID.y; y++)
+        {
+            for(int x = 0; x < WORLD_GRID.x; x++)
+            {
+                Tile* tile = get_tile(x, y);
+
+                if(!tile->isVisible){
+                    continue;
+                }
+
+                tile->neighbourMask = 0;
+                int neighbourCount = 0;
+                int extendedNeighbourCount = 0;
+                int emptyNeighbourSlot = 0;
+
+                // Mira a los alrededores de los 12 vecinos
+                for(int n = 0; n < 12; n++){
+                    Tile* neighbour = get_tile(x + neighbourOffsets[n * 2],
+                                            y + neighbourOffsets[n * 2 + 1]);
+
+                    // Si no hay vecinos, significa el borde del mundo
+                    if(!neighbour || neighbour->isVisible)
+                    {
+                        tile->neighbourMask |= BIT(n);
+                        if(n < 8) // contamos los vecinos directos
+                        {
+                            neighbourCount++;
+                        }
+                        else{ // Contamos los vecinos 1 tile alejado
+                            extendedNeighbourCount++;
+                        }
+                    }
+                    else if(n < 8)
+                    {
+                        emptyNeighbourSlot = n;
+                    }
+                }
+
+                if(neighbourCount == 7 && emptyNeighbourSlot >= 4) // tenemos una esquina
+                {
+                    tile->neighbourMask = 16 + (emptyNeighbourSlot - 4);
+                }
+                else if(neighbourCount == 8 && extendedNeighbourCount == 4)
+                {
+                    tile->neighbourMask = 20;
+                }
+                else
+                {
+                    tile->neighbourMask = tile->neighbourMask & 0b1111;
+                }
+            }
+        }
+    }
+}
+
 // #######################################################
 //                      Game Functions (Expuestas)
 // #######################################################
-EXPORT_FN void update_game(GameState* gameStateIn,RenderData* renderDataIn, Input* inputIn)
+EXPORT_FN void update_game(GameState* gameStateIn,
+                           RenderData* renderDataIn,
+                           Input* inputIn,
+                           float dt)
 {
 if(renderData != renderDataIn)
 {
@@ -115,85 +233,50 @@ if(!gameState -> initialized)
     }
 }
 
-if(is_down(MOUSE_LEFT)){
-    IVec2 mousePosWorld = input->mousePosWorld;
-    Tile* tile = get_tile(mousePosWorld);
-    if(tile){
-        tile->isVisible = true;
+// Fixed Update Loop
+{
+    gameState->updateTimer += dt;
+    while(gameState->updateTimer >= UPDATE_DELAY){
+        gameState->updateTimer -= UPDATE_DELAY;
+        simulate();
+
+        // mouse relativo, porque hay mas frames que simulations
+        input->relMouse = input->mousePos - input->prevMousePos;
+        input->prevMousePos = input->mousePos;
+
+        // clereamos la transitionCount para cada tecla o key
+        {
+            for(int keyCode = 0; keyCode < KEY_COUNT; keyCode++)
+            {
+                input->keys[keyCode].justReleased = false;
+                input->keys[keyCode].justPressed = false;
+                input->keys[keyCode].halfTransitionCount = 0;
+            }
+        }
     }
 }
 
-if(is_down(MOUSE_RIGHT)){
-    IVec2 mousePosWorld = input->mousePosWorld;
-    Tile* tile = get_tile(mousePosWorld);
-    if(tile){
-        tile->isVisible = false;
-    }
+float interpolateDT = (float)(gameState->updateTimer / UPDATE_DELAY);
+
+// Dibujamos al jugador
+{
+    Player& player = gameState->player;
+    IVec2 playerPos = lerp(player.prevPos, player.pos, interpolateDT);
+    draw_sprite(SPRITE_DICE, playerPos);
 }
+
+
 
 // Dibujar Tileset
 {
-    //Tiles vecinos             Top     Izq         Der         Abajo
-    int neighbourOffsets[24] = {0,-1,   -1,0,       1,0,        0,1,
-    //                          TopIzq  TopDer      AbajoIzq    AbajoDer
-                               -1,-1,   1,-1,       -1,1,       1,1,
-    //                          Top2    Izq2        Der2        Abajo2
-                                0,-2,   -2,0,       2,0,        0,2};
-
-    // TopIzq ( topLeft )   = BIT(4) = 12
-    // TopDer ( topRight )   = BIT(5) = 32
-    // BottomIzq ( bottomLeft )   = BIT(6) = 64
-    // BottomDer ( bottomRight )   = BIT(7) = 128
-
-
-    for(int y = 0; y < WORLD_GRID.y; y++){
+    for(int y = 0; y < WORLD_GRID.y; y++)
+    {
         for(int x = 0; x < WORLD_GRID.x; x++)
         {
             Tile* tile = get_tile(x, y);
 
             if(!tile->isVisible){
                 continue;
-            }
-
-            tile->neighbourMask = 0;
-            int neighbourCount = 0;
-            int extendedNeighbourCount = 0;
-            int emptyNeighbourSlot = 0;
-
-            // Mira a los alrededores de los 12 vecinos
-            for(int n = 0; n < 12; n++){
-                Tile* neighbour = get_tile(x + neighbourOffsets[n * 2],
-                                           y + neighbourOffsets[n * 2 + 1]);
-
-                // Si no hay vecinos, significa el borde del mundo
-                if(!neighbour || neighbour->isVisible)
-                {
-                    tile->neighbourMask |= BIT(n);
-                    if(n < 8) // contamos los vecinos directos
-                    {
-                        neighbourCount++;
-                    }
-                    else{ // Contamos los vecinos 1 tile alejado
-                        extendedNeighbourCount++;
-                    }
-                }
-                else if(n < 8)
-                {
-                    emptyNeighbourSlot = n;
-                }
-            }
-
-            if(neighbourCount == 7 && emptyNeighbourSlot >= 4) // tenemos una esquina
-            {
-                tile->neighbourMask = 16 + (emptyNeighbourSlot - 4);
-            }
-            else if(neighbourCount == 8 && extendedNeighbourCount == 4)
-            {
-                tile->neighbourMask = 20;
-            }
-            else
-            {
-                tile->neighbourMask = tile->neighbourMask & 0b1111;
             }
 
             // Dibujamos un Tile
@@ -207,24 +290,5 @@ if(is_down(MOUSE_RIGHT)){
         }
     }
 }
+}
 
-
-draw_sprite(SPRITE_DICE, gameState->playerPos);
-
-if(is_down(MOVE_LEFT))
-{
-    gameState->playerPos.x -= 1;
-}
-if(is_down(MOVE_RIGHT))
-{
-    gameState->playerPos.x += 1;
-}
-if(is_down(MOVE_UP))
-{
-    gameState->playerPos.y -= 1;
-}
-if(is_down(MOVE_DOWN))
-{
-    gameState->playerPos.y += 1;
-}
-}

@@ -19,6 +19,9 @@ static KeyCodeID KeyCodeLookupTable[KEY_COUNT];
 
 #include "gl_renderer.cpp"
 
+// Se usa para obtener el Delta Time
+#include<chrono>
+
 // ###
 // Game DLL STUFF( HOT CODE RELOADING )
 // ###
@@ -29,46 +32,53 @@ static update_game_type* update_game_ptr;
 // ###
 // Cross Platform Functions
 // ###
+double get_delta_time();
 void reload_game_dll(BumpAllocator* transientStorage);
 
 
 int main()
 {
+// Inicializamos el delta time
+get_delta_time();
+
 BumpAllocator transientStorage = make_bump_allocator(MB(50)); // 10 MB
 BumpAllocator persistentStorage = make_bump_allocator(MB(50));
 
 input = (Input*)bump_alloc(&persistentStorage, sizeof(Input));
 if(!input)
 {
-    SM_ERROR(false, "Failed to allocate Input");
+    SM_ERROR("false", "Failed to allocate Input");
     return -1;
 }
 
 renderData = (RenderData*)bump_alloc(&persistentStorage, sizeof(RenderData));
 if(!renderData)
 {
-    SM_ERROR(false, "Failed to allocate RenderData");
+    SM_ERROR("false", "Failed to allocate RenderData");
     return -1;
 }
 
 gameState = (GameState*)bump_alloc(&persistentStorage, sizeof(GameState));
 if(!gameState)
 {
-    SM_ERROR(false, "Failed to allocate GameState");
+    SM_ERROR("false", "Failed to allocate GameState");
     return -1;
 }
 
 platform_fill_keycode_lookup_table();
 platform_create_window(1280, 720, "Baldegon Motor");
+platform_set_vsync(true);
 
 gl_init(&transientStorage);
 
 while(running)
 {
+    float dt = get_delta_time();
+
     reload_game_dll(&transientStorage);
     // Update
     platform_update_window();
-    update_game(gameState, renderData, input);
+    update_game(gameState, renderData, input, dt);
     gl_render(&transientStorage);
     platform_swap_buffers();
 
@@ -78,9 +88,25 @@ while(running)
 return 0;
 }
 
-void update_game(GameState* gameStateIn,RenderData* renderDataIn, Input* inputIn)
+void update_game(GameState* gameStateIn,
+                RenderData* renderDataIn,
+                Input* inputIn,
+                float dt)
 {
-    update_game_ptr(gameStateIn, renderDataIn, inputIn);
+    update_game_ptr(gameStateIn, renderDataIn, inputIn, dt);
+}
+
+double get_delta_time()
+{
+    // se ejecuta una vez cuando ingresa en la funcion
+    static auto lastTime = std::chrono::steady_clock::now();
+    auto currentTime = std::chrono::steady_clock::now();
+
+    // los segundos
+    double delta = std::chrono::duration<double>(currentTime - lastTime).count();
+    lastTime = currentTime;
+
+    return delta;
 }
 
 void reload_game_dll(BumpAllocator* transientStorage)
@@ -113,3 +139,4 @@ void reload_game_dll(BumpAllocator* transientStorage)
         lastEditTimestampGameDLL = currentTimestampGameDLL;
     }
 }
+
