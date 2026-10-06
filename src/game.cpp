@@ -195,7 +195,6 @@ if(renderData != renderDataIn)
 if(!gameState -> initialized)
 {
     renderData->gameCamera.dimensions = {WORLD_WIDTH, WORLD_HEIGHT};
-    gameState->initialized = true;
 
     // Key Mappings
     {
@@ -231,6 +230,9 @@ if(!gameState -> initialized)
         // Black Inside
         gameState->tileCoords.add({tilesPosition.x, tilesPosition.y + 5 * 8});
     }
+
+    gameState->initialized = true;
+
 }
 
 // Fixed Update Loop
